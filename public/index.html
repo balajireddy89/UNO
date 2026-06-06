@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO AIRDOSA - Premium Multiplayer Card Game</title>
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🃏</text></svg>">
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/cards.css">
+</head>
+<body class="dark-theme">
+  <!-- Toast System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main App Wrapper -->
+  <div id="app-wrapper">
+    
+    <!-- 1. LANDING / AUTHENTICATION VIEW -->
+    <div id="view-landing" class="view active">
+      <div class="landing-bg-animation">
+        <div class="floating-card red-glow" style="--rot:-15deg; --delay:0s; --left:10%;">7</div>
+        <div class="floating-card yellow-glow" style="--rot:10deg; --delay:1.5s; --left:80%;">S</div>
+        <div class="floating-card green-glow" style="--rot:-5deg; --delay:3s; --left:25%;">+2</div>
+        <div class="floating-card blue-glow" style="--rot:20deg; --delay:0.5s; --left:70%;">R</div>
+        <div class="floating-card wild-glow" style="--rot:12deg; --delay:4s; --left:45%;">W</div>
+      </div>
+      <div class="landing-card-glass">
+        <h1 class="game-logo-text">UNO <span class="logo-accent">AIRDOSA</span></h1>
+        <p class="landing-subtitle">Experience the ultimate competitive online card game</p>
+        
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+          <button id="tab-guest" class="auth-tab-btn active" onclick="app.switchAuthTab('guest')">Play Guest</button>
+          <button id="tab-login" class="auth-tab-btn" onclick="app.switchAuthTab('login')">Sign In</button>
+        </div>
+
+        <!-- Guest Form -->
+        <div id="auth-guest-form" class="auth-form active">
+          <div class="form-group">
+            <label for="guest-username">Choose a Username</label>
+            <input type="text" id="guest-username" placeholder="e.g. CardMaster" maxlength="15" autocomplete="off">
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" onclick="app.submitGuestAuth()">Play Now</button>
+        </div>
+
+        <!-- Login / Register Form -->
+        <div id="auth-login-form" class="auth-form">
+          <div class="form-group">
+            <label for="auth-username">Username</label>
+            <input type="text" id="auth-username" placeholder="Username" maxlength="15" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="Password">
+          </div>
+          <div class="auth-actions">
+            <button class="btn btn-primary" onclick="app.submitLogin()">Sign In</button>
+            <button class="btn btn-outline" onclick="app.submitRegister()">Register</button>
+          </div>
+        </div>
+
+        <!-- Rules Preview Trigger -->
+        <button class="btn btn-text btn-block" style="margin-top: 15px;" onclick="app.openRulesModal()">View Rules & Instructions</button>
+      </div>
+    </div>
+
+    <!-- 2. HOME VIEW -->
+    <div id="view-home" class="view">
+      <!-- Top Bar Profile HUD -->
+      <header class="home-hud">
+        <div class="hud-profile" onclick="app.navigateTo('profile')">
+          <div class="hud-avatar-wrapper">
+            <img id="hud-avatar" src="assets/avatars/default_avatar_1.svg" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23444%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22white%22>U</text></svg>'">
+          </div>
+          <div class="hud-info">
+            <span id="hud-username" class="hud-name">PlayerName</span>
+            <div class="hud-xp-row">
+              <span class="hud-level-badge">LVL <span id="hud-level">1</span></span>
+              <div class="hud-xp-bar-bg">
+                <div id="hud-xp-bar-fill" class="hud-xp-bar-fill" style="width: 40%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hud-stats">
+          <div class="hud-stat-box coins-box">
+            <span class="coin-icon">🪙</span>
+            <span id="hud-coins">100</span>
+          </div>
+          <button class="btn btn-icon btn-theme-toggle" onclick="app.toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+          <button class="btn btn-icon btn-logout" onclick="app.logout()" title="Logout">🚪</button>
+        </div>
+      </header>
+
+      <!-- Home Main Options Grid -->
+      <main class="home-grid">
+        <!-- Play Modes Column -->
+        <div class="home-modes-card card">
+          <h2>Select Game Mode</h2>
+          <div class="modes-list">
+            <div class="mode-item online-mode" onclick="app.showOnlineLobbiesModal()">
+              <div class="mode-icon">🌐</div>
+              <div class="mode-details">
+                <h3>Online Multiplayer</h3>
+                <p>Host custom matches or join online rooms to play with friends.</p>
+              </div>
+            </div>
+            
+            <div class="mode-item offline-mode" onclick="app.openOfflineSetupModal()">
+              <div class="mode-icon">📱</div>
+              <div class="mode-details">
+                <h3>Pass & Play (Offline)</h3>
+                <p>Play locally with multiple players on the exact same device.</p>
+              </div>
+            </div>
+
+            <div class="mode-item practice-mode" onclick="app.openPracticeSetupModal()">
+              <div class="mode-icon">🤖</div>
+              <div class="mode-details">
+                <h3>Singleplayer Practice</h3>
+                <p>Train your strategy against customizable AI opponents.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="home-stats-card card">
+          <h2>Career Summary</h2>
+          <div class="stats-grid">
+            <div class="stat-cell">
+              <span class="stat-val" id="stats-games-played">0</span>
+              <span class="stat-lbl">Matches</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-val" id="stats-wins">0</span>
+              <span class="stat-lbl">Wins</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-val" id="stats-winrate">0%</span>
+              <span class="stat-lbl">Win Rate</span>
+            </div>
+          </div>
+          
+          <div class="recent-achievements">
+            <h3>Customization Shop</h3>
+            <p>Spend your earned coins to unlock customizable card back themes and neon table skins!</p>
+            <button class="btn btn-secondary btn-block" onclick="app.navigateTo('shop')">Enter Shop</button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Navigation Bottom Footer Bar -->
+      <nav class="home-nav">
+        <button class="nav-item active" onclick="app.navigateTo('home')">
+          <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+        </button>
+        <button class="nav-item" onclick="app.navigateTo('profile')">
+          <span class="nav-icon">👤</span><span class="nav-label">Profile</span>
+        </button>
+        <button class="nav-item" onclick="app.navigateTo('shop')">
+          <span class="nav-icon">🛒</span><span class="nav-label">Shop</span>
+        </button>
+        <button class="nav-item" onclick="app.navigateTo('leaderboard')">
+          <span class="nav-icon">🏆</span><span class="nav-label">Rankings</span>
+        </button>
+        <button class="nav-item" onclick="app.openRulesModal()">
+          <span class="nav-icon">📖</span><span class="nav-label">Rules</span>
+        </button>
+        <button id="admin-nav-item" class="nav-item admin-only" onclick="app.navigateTo('admin')" style="display: none;">
+          <span class="nav-icon">🛠️</span><span class="nav-label">Admin</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- 3. LOBBY VIEW -->
+    <div id="view-lobby" class="view">
+      <header class="lobby-header">
+        <button class="btn btn-outline btn-sm" onclick="socket.leaveRoom()">⬅ Exit Room</button>
+        <div class="lobby-code-display">
+          <span>Room Code:</span>
+          <span id="lobby-code-val" class="code-badge">XXXX</span>
+        </div>
+      </header>
+
+      <div class="lobby-grid">
+        <!-- Players panel -->
+        <div class="lobby-players-panel card">
+          <h2>Players (<span id="lobby-players-count">0</span>/<span id="lobby-max-players">4</span>)</h2>
+          <div id="lobby-players-list" class="lobby-players-list">
+            <!-- Player Slot Item -->
+          </div>
+          
+          <div class="lobby-slots-control">
+            <button id="btn-add-ai" class="btn btn-outline btn-sm" onclick="ui.showAddAiDialog()">+ Add AI Bot</button>
+            <button id="btn-toggle-spectate" class="btn btn-outline btn-sm" onclick="socket.toggleSpectator()">Spectate Mode</button>
+          </div>
+        </div>
+
+        <!-- Lobby Settings & Chat Panel -->
+        <div class="lobby-settings-panel card">
+          <h2>Room Settings</h2>
+          <div id="lobby-settings-form" class="lobby-settings-form">
+            <div class="toggle-group">
+              <label class="toggle-switch">
+                <input type="checkbox" id="rule-stacking" onchange="ui.onRuleChange()">
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-info">
+                <strong>Allow Penalty Stacking</strong>
+                <p>Can stack +2 on +2, +4 on +4 to pass penalty</p>
+              </div>
+            </div>
+
+            <div class="toggle-group">
+              <label class="toggle-switch">
+                <input type="checkbox" id="rule-jumpin" onchange="ui.onRuleChange()">
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-info">
+                <strong>Jump-In Rule</strong>
+                <p>Play identical card out of turn instantly</p>
+              </div>
+            </div>
+
+            <div class="toggle-group">
+              <label class="toggle-switch">
+                <input type="checkbox" id="rule-sevenzero" onchange="ui.onRuleChange()">
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-info">
+                <strong>Seven-Zero Rule</strong>
+                <p>0 rotates all hands, 7 swaps hand with opponent</p>
+              </div>
+            </div>
+
+            <div class="form-group-row">
+              <label for="rule-timer">Turn Timer Limit</label>
+              <select id="rule-timer" onchange="ui.onRuleChange()">
+                <option value="15">15 Seconds</option>
+                <option value="30" selected>30 Seconds</option>
+                <option value="60">60 Seconds</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lobby Chat -->
+          <div class="lobby-chat card">
+            <h3>Lobby Chat</h3>
+            <div id="lobby-chat-messages" class="chat-messages-container"></div>
+            <div class="chat-input-row">
+              <input type="text" id="lobby-chat-input" placeholder="Type a message..." maxlength="100" onkeydown="if(event.key==='Enter') ui.sendLobbyChat()">
+              <button class="btn btn-primary" onclick="ui.sendLobbyChat()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lobby-footer">
+        <button id="btn-ready" class="btn btn-secondary btn-lg" onclick="socket.toggleReady()">READY</button>
+        <button id="btn-start-game" class="btn btn-primary btn-lg" style="display: none;" onclick="socket.startGame()">START GAME</button>
+      </div>
+    </div>
+
+    <!-- 4. GAME BOARD VIEW -->
+    <div id="view-game" class="view">
+      <header class="game-hud-top">
+        <div class="game-hud-left">
+          <button class="btn btn-outline btn-sm" id="btn-game-exit" onclick="ui.confirmExitGame()">Quit</button>
+          <span class="hud-direction">Direction: <span id="direction-indicator" class="dir-clockwise">Clockwise ↻</span></span>
+        </div>
+        <div class="game-hud-center">
+          <span id="penalty-notification" class="penalty-banner" style="display: none;">+0 PENALTY ACCUMULATING!</span>
+        </div>
+        <div class="game-hud-right">
+          <button class="btn btn-icon" id="btn-mute" onclick="audio.toggleMute()" title="Mute/Unmute Sounds">🔊</button>
+          <button class="btn btn-icon" id="btn-reaction-menu" onclick="ui.toggleEmoteRing()" title="Send Emote">😃</button>
+        </div>
+      </header>
+
+      <!-- Circular Emote Selection Ring overlay -->
+      <div id="emote-ring" class="emote-ring-overlay" style="display: none;">
+        <div class="emote-choices">
+          <button class="emote-btn" onclick="ui.sendEmote('😂')">😂</button>
+          <button class="emote-btn" onclick="ui.sendEmote('😮')">😮</button>
+          <button class="emote-btn" onclick="ui.sendEmote('😠')">😠</button>
+          <button class="emote-btn" onclick="ui.sendEmote('👍')">👍</button>
+          <button class="emote-btn" onclick="ui.sendEmote('🎉')">🎉</button>
+          <button class="emote-btn" onclick="ui.sendEmote('🃏')">🃏</button>
+        </div>
+      </div>
+
+      <!-- Game Board Table -->
+      <div id="game-table" class="game-table">
+        <!-- Direction Arrow Rotating Circle -->
+        <div id="direction-ring" class="direction-ring clockwise"></div>
+
+        <!-- Seats around circular table (dynamically generated positions) -->
+        <div id="player-seats" class="player-seats-container"></div>
+
+        <!-- Center Deck Piles -->
+        <div class="table-center">
+          <!-- Draw Pile -->
+          <div id="draw-pile" class="card-pile draw-pile" onclick="ui.handleDrawClick()">
+            <div class="card-back-render neon-back"></div>
+            <div class="deck-count-lbl" id="deck-count-val">0</div>
+          </div>
+          
+          <!-- Discard Pile -->
+          <div id="discard-pile" class="card-pile discard-pile">
+            <div class="empty-discard-placeholder">Empty</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom HUD Controls -->
+      <div class="game-bottom-control">
+        <!-- Turn actions -->
+        <div class="game-turn-actions">
+          <button id="btn-pass-turn" class="btn btn-secondary" style="display: none;" onclick="ui.handlePassClick()">Pass Turn</button>
+          <button id="btn-call-uno" class="btn btn-primary pulse-btn" style="display: none;" onclick="ui.handleUnoClick()">UNO!</button>
+        </div>
+
+        <!-- Client Player Hand Shelf -->
+        <div class="client-hand-shelf-container">
+          <div class="hand-header">
+            <span>Your Cards (<span id="hand-count-val">0</span>)</span>
+            <span id="turn-countdown-indicator" class="turn-timer-badge">30s</span>
+          </div>
+          
+          <!-- Scrollable Hand list -->
+          <div id="client-hand-cards" class="hand-cards-carousel">
+            <!-- Render cards here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Game Slide chat box -->
+      <div id="game-chat-overlay" class="game-chat-drawer">
+        <button class="btn-chat-toggle" onclick="ui.toggleGameChat()">Chat 💬</button>
+        <div class="game-chat-inner">
+          <div id="game-chat-messages" class="chat-messages-container"></div>
+          <div class="chat-input-row">
+            <input type="text" id="game-chat-input" placeholder="Say something..." maxlength="80" onkeydown="if(event.key==='Enter') ui.sendGameChat()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay Wild Color Selector Modal -->
+      <div id="modal-wild-choice" class="game-modal-overlay" style="display: none;">
+        <div class="wild-picker-card">
+          <h3>Choose Active Color</h3>
+          <div class="wild-picker-grid">
+            <button class="picker-quad red-quad" onclick="ui.selectWildColor('red')">RED</button>
+            <button class="picker-quad yellow-quad" onclick="ui.selectWildColor('yellow')">YELLOW</button>
+            <button class="picker-quad green-quad" onclick="ui.selectWildColor('green')">GREEN</button>
+            <button class="picker-quad blue-quad" onclick="ui.selectWildColor('blue')">BLUE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay Seven Swap Hand selector Modal -->
+      <div id="modal-seven-swap" class="game-modal-overlay" style="display: none;">
+        <div class="swap-picker-card">
+          <h3>Choose Player to Swap Hands</h3>
+          <div id="swap-opponents-list" class="swap-opponents-list"></div>
+        </div>
+      </div>
+
+      <!-- Local Pass-and-Play Transition Overlay -->
+      <div id="pass-play-transition" class="game-modal-overlay" style="display: none;">
+        <div class="pass-reveal-box card">
+          <h2>Pass the Device</h2>
+          <p>Pass the device to <strong id="next-player-reveal-name" style="color: var(--primary);">Player</strong>.</p>
+          <p class="warning-text">Make sure others cannot see your screen!</p>
+          <button class="btn btn-primary btn-lg" onclick="app.revealOfflineHand()">Reveal Cards</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. USER PROFILE VIEW -->
+    <div id="view-profile" class="view">
+      <header class="view-header">
+        <button class="btn btn-outline btn-sm" onclick="app.navigateTo('home')">🏠 Back Home</button>
+        <h2>Your Profile</h2>
+      </header>
+
+      <div class="profile-grid">
+        <!-- Profile info -->
+        <div class="profile-left card">
+          <div class="avatar-edit-box">
+            <img id="profile-avatar-img" src="assets/avatars/default_avatar_1.svg" alt="Profile Avatar" class="profile-large-avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23444%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22white%22>U</text></svg>'">
+            <button class="btn btn-sm btn-outline" onclick="ui.openAvatarSelector()">Change Avatar</button>
+          </div>
+          
+          <h3 id="profile-username">PlayerName</h3>
+          <span class="badge" id="profile-badge">REGISTERED</span>
+          
+          <div class="profile-level-stats">
+            <div class="lvl-badge">LEVEL <span id="profile-level">1</span></div>
+            <div class="xp-progress-bar">
+              <div id="profile-xp-fill" class="hud-xp-bar-fill" style="width: 20%"></div>
+            </div>
+            <span class="xp-val" id="profile-xp-text">20 / 100 XP</span>
+          </div>
+
+          <div class="stats-table">
+            <div class="stats-row"><span>Total Games:</span><strong id="profile-stats-played">0</strong></div>
+            <div class="stats-row"><span>Wins:</span><strong id="profile-stats-wins">0</strong></div>
+            <div class="stats-row"><span>Losses:</span><strong id="profile-stats-losses">0</strong></div>
+            <div class="stats-row"><span>Win Rate:</span><strong id="profile-stats-rate">0%</strong></div>
+          </div>
+        </div>
+
+        <!-- Right: Social & Friends List -->
+        <div class="profile-right card">
+          <h3>Friends & Social</h3>
+          <div class="friends-search-row">
+            <input type="text" id="friend-search-input" placeholder="Friend Username..." maxlength="15">
+            <button class="btn btn-primary" onclick="ui.sendFriendRequest()">Add Friend</button>
+          </div>
+
+          <div id="friends-list" class="friends-list-container">
+            <!-- Friend Rows -->
+            <p class="empty-text">No friends added yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Match History Card -->
+      <div class="profile-history-card card">
+        <h3>Match History</h3>
+        <div class="history-table-container">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Placement</th>
+                <th>Opponents</th>
+                <th>Coins</th>
+                <th>XP</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="profile-history-rows">
+              <tr><td colspan="6" class="text-center">No matches played yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. COSMETICS SHOP VIEW -->
+    <div id="view-shop" class="view">
+      <header class="view-header">
+        <button class="btn btn-outline btn-sm" onclick="app.navigateTo('home')">🏠 Back Home</button>
+        <h2>Cosmetic Shop</h2>
+        <div class="shop-coins-display">🪙 <span id="shop-coins-val">100</span></div>
+      </header>
+
+      <!-- Shop tabs -->
+      <div class="shop-tabs">
+        <button class="shop-tab active" onclick="ui.switchShopTab('cardBack')">Card Backs</button>
+        <button class="shop-tab" onclick="ui.switchShopTab('avatar')">Avatars</button>
+        <button class="shop-tab" onclick="ui.switchShopTab('theme')">Table Themes</button>
+      </div>
+
+      <!-- Grid of Shop Items -->
+      <div id="shop-items-grid" class="shop-items-grid">
+        <!-- Render shop items -->
+      </div>
+    </div>
+
+    <!-- 7. LEADERBOARDS VIEW -->
+    <div id="view-leaderboard" class="view">
+      <header class="view-header">
+        <button class="btn btn-outline btn-sm" onclick="app.navigateTo('home')">🏠 Back Home</button>
+        <h2>Global Rankings</h2>
+      </header>
+
+      <div class="leaderboard-tabs">
+        <button class="leaderboard-tab active" onclick="ui.switchLeaderboardTab('wins')">Total Wins</button>
+        <button class="leaderboard-tab" onclick="ui.switchLeaderboardTab('coins')">Rich List (Coins)</button>
+        <button class="leaderboard-tab" onclick="ui.switchLeaderboardTab('xp')">Max Level (XP)</button>
+        <button class="leaderboard-tab" onclick="ui.switchLeaderboardTab('winrate')">Win Rate %</button>
+      </div>
+
+      <div class="leaderboard-container card">
+        <div class="leaderboard-header-row">
+          <span>Rank</span>
+          <span>Username</span>
+          <span>Level</span>
+          <span id="leaderboard-score-column">Wins</span>
+        </div>
+        <div id="leaderboard-rows" class="leaderboard-rows-list">
+          <!-- Dynamically populated leaderboard rows -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. ADMIN DASHBOARD VIEW -->
+    <div id="view-admin" class="view">
+      <header class="view-header">
+        <button class="btn btn-outline btn-sm" onclick="app.navigateTo('home')">🏠 Back Home</button>
+        <h2>Admin Moderation Panel</h2>
+      </header>
+
+      <div class="admin-stats-summary">
+        <div class="admin-stat-card">
+          <h4 id="admin-stat-users">0</h4>
+          <span>Users</span>
+        </div>
+        <div class="admin-stat-card">
+          <h4 id="admin-stat-rooms">0</h4>
+          <span>Active Rooms</span>
+        </div>
+        <div class="admin-stat-card">
+          <h4 id="admin-stat-reports">0</h4>
+          <span>Open Reports</span>
+        </div>
+        <div class="admin-stat-card">
+          <h4 id="admin-stat-bans">0</h4>
+          <span>Banned Accounts</span>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <!-- User list management -->
+        <div class="admin-card card">
+          <h3>Users Accounts</h3>
+          <div class="admin-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Level</th>
+                  <th>Coins</th>
+                  <th>Type</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-user-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Moderation Reports -->
+        <div class="admin-card card">
+          <h3>Unresolved Abuse Reports</h3>
+          <div class="admin-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Reporter</th>
+                  <th>Reported</th>
+                  <th>Reason</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-report-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 1: LOBBIES / MATCHMAKING (ONLINE) -->
+    <div id="modal-online-lobbies" class="game-modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-card-header">
+          <h3>Online Multiplayer</h3>
+          <button class="btn-close" onclick="app.closeOnlineLobbiesModal()">×</button>
+        </div>
+        <div class="modal-card-body">
+          <div class="lobbies-choices">
+            <!-- Left Side: Quickmatch & Joins -->
+            <div class="lobbies-join-panel">
+              <button class="btn btn-primary btn-block btn-lg" onclick="socket.quickPlay()">⚡ Quick Play Matchmaking</button>
+              
+              <div class="divider"><span>OR</span></div>
+              
+              <div class="form-group">
+                <label for="join-room-code-input">Enter Private Room Code</label>
+                <input type="text" id="join-room-code-input" placeholder="e.g. AB12" maxlength="6" style="text-transform: uppercase;">
+              </div>
+              <button class="btn btn-secondary btn-block" onclick="socket.joinRoomByCode()">Join Custom Room</button>
+            </div>
+            
+            <!-- Right Side: Room Creation -->
+            <div class="lobbies-create-panel">
+              <h4>Create Game Room</h4>
+              <div class="form-group">
+                <label for="create-max-players">Max Players</label>
+                <select id="create-max-players">
+                  <option value="2">2 Players</option>
+                  <option value="3">3 Players</option>
+                  <option value="4" selected>4 Players</option>
+                  <option value="6">6 Players</option>
+                  <option value="8">8 Players</option>
+                  <option value="10">10 Players</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="create-spectate" checked> Enable Spectators
+                </label>
+              </div>
+              <button class="btn btn-primary btn-block" onclick="socket.createCustomRoom()">Host Room</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: OFFLINE PASS & PLAY SETUP -->
+    <div id="modal-offline-setup" class="game-modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-card-header">
+          <h3>Local Game Setup</h3>
+          <button class="btn-close" onclick="app.closeOfflineSetupModal()">×</button>
+        </div>
+        <div class="modal-card-body">
+          <div class="form-group">
+            <label>Players Count</label>
+            <select id="offline-player-count" onchange="ui.onOfflinePlayerCountChange()">
+              <option value="2" selected>2 Players</option>
+              <option value="3">3 Players</option>
+              <option value="4">4 Players</option>
+              <option value="5">5 Players</option>
+              <option value="6">6 Players</option>
+            </select>
+          </div>
+
+          <div id="offline-names-container" class="offline-names-list">
+            <!-- Generated name input elements -->
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg" onclick="app.startOfflineGame()">Start Local Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: SINGLEPLAYER PRACTICE SETUP -->
+    <div id="modal-practice-setup" class="game-modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-card-header">
+          <h3>AI Practice Setup</h3>
+          <button class="btn-close" onclick="app.closePracticeSetupModal()">×</button>
+        </div>
+        <div class="modal-card-body">
+          <div class="form-group">
+            <label for="practice-ai-count">AI Opponents</label>
+            <select id="practice-ai-count">
+              <option value="1">1 AI Bot</option>
+              <option value="2">2 AI Bots</option>
+              <option value="3" selected>3 AI Bots</option>
+              <option value="4">4 AI Bots</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="practice-difficulty">AI Bot Level</label>
+            <select id="practice-difficulty">
+              <option value="easy">Easy (Plays randomly, forgets UNO)</option>
+              <option value="medium" selected>Medium (Standard player behavior)</option>
+              <option value="hard">Hard (Counts cards, blocks aggressively)</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg" onclick="app.startPracticeGame()">Start Practice Mode</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: RULES BOOKLET -->
+    <div id="modal-rules" class="game-modal-overlay" style="display: none;">
+      <div class="modal-card modal-large">
+        <div class="modal-card-header">
+          <h3>UNO AIRDOSA - Game Rules</h3>
+          <button class="btn-close" onclick="app.closeRulesModal()">×</button>
+        </div>
+        <div class="modal-card-body scrollable-content">
+          <h4>Objective</h4>
+          <p>The main objective is to be the first player to discard all of the cards in your hand.</p>
+          
+          <hr>
+          
+          <h4>Card Types</h4>
+          <ul>
+            <li><strong>Number Cards (0-9)</strong>: Standard cards in Red, Yellow, Green, and Blue.</li>
+            <li><strong>Skip Card</strong>: The next player in the current play direction loses their turn.</li>
+            <li><strong>Reverse Card</strong>: Reverses the direction of play. Clockwise becomes Counter-Clockwise and vice versa.</li>
+            <li><strong>Draw Two (+2)</strong>: The next player draws 2 cards and misses their turn.</li>
+            <li><strong>Wild Card</strong>: Allows the player to choose the next active color in play.</li>
+            <li><strong>Wild Draw Four (+4)</strong>: Allows the player to choose the next color AND forces the next player to draw 4 cards and lose their turn.</li>
+          </ul>
+
+          <hr>
+
+          <h4>Special Room Variations (Configurable)</h4>
+          <ul>
+            <li><strong>Stacking draws</strong>: If a +2 card is played, the next player can stack another +2 card instead of drawing. The accumulated penalty transfers to the subsequent player. The same stacking rule applies to +4 cards.</li>
+            <li><strong>Jump-In rule</strong>: If a player holds a card that matches the top discard pile card in BOTH color AND symbol/value, they may play it instantly, even out of turn. The play flow resumes from their seat.</li>
+            <li><strong>Seven-Zero rule</strong>: Playing a number 7 card forces that player to swap their entire hand with an opponent of their choice. Playing a number 0 card rotates everyone's hand in the active play direction.</li>
+          </ul>
+
+          <hr>
+
+          <h4>UNO Shout Rules</h4>
+          <p>When you have only <strong>one card left</strong> in your hand, you must press the <strong>UNO</strong> button. If you forget to do so before another player calls you out (by pressing the Call Out alert), you will receive a penalty of <strong>2 cards</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: END OF ROUND GAME REWARDS -->
+    <div id="modal-game-over" class="game-modal-overlay" style="display: none;">
+      <div class="game-over-box card text-center">
+        <h1 id="game-over-title">ROUND END!</h1>
+        <p class="subtitle">Winner: <strong id="game-over-winner-name" style="color: var(--primary);">PlayerName</strong></p>
+
+        <div class="rewards-display-grid">
+          <div class="reward-card-cell coins-reward">
+            <span class="reward-icon">🪙</span>
+            <span id="game-over-coins">+0</span>
+            <span class="reward-lbl">Coins</span>
+          </div>
+          <div class="reward-card-cell xp-reward">
+            <span class="reward-icon">⭐</span>
+            <span id="game-over-xp">+0</span>
+            <span class="reward-lbl">XP</span>
+          </div>
+        </div>
+
+        <div class="post-game-ranking">
+          <h3>Progression Summary</h3>
+          <p id="game-over-stats-report">Your level remains 1.</p>
+          <div class="hud-xp-bar-bg" style="max-width: 300px; margin: 0 auto 15px;">
+            <div id="game-over-xp-fill" class="hud-xp-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="game-over-actions">
+          <button id="btn-over-lobby" class="btn btn-primary btn-lg" onclick="app.returnToHome()">Back to Home</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 6: AVATAR SELECTOR -->
+    <div id="modal-avatar-select" class="game-modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-card-header">
+          <h3>Equip Profile Avatar</h3>
+          <button class="btn-close" onclick="ui.closeAvatarSelector()">×</button>
+        </div>
+        <div class="modal-card-body">
+          <div id="avatars-picker-grid" class="avatars-picker-grid">
+            <!-- Dynamically populated list of unlocked avatars -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Client JavaScript modules -->
+  <script src="js/audio.js"></script>
+  <script src="js/socket.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

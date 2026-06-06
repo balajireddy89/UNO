@@ -1,0 +1,89 @@
+/* Design Token Variables */
+:root {
+  /* Fonts */
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Theme agnostic variables */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-circle: 50%;
+
+  /* UNO Palette - Premium HSL Colors */
+  --red-color: hsl(355, 85%, 55%);
+  --red-glow: hsla(355, 85%, 55%, 0.4);
+  --yellow-color: hsl(45, 95%, 50%);
+  --yellow-glow: hsla(45, 95%, 50%, 0.4);
+  --green-color: hsl(142, 72%, 43%);
+  --green-glow: hsla(142, 72%, 43%, 0.4);
+  --blue-color: hsl(210, 90%, 50%);
+  --blue-glow: hsla(210, 90%, 50%, 0.4);
+  --wild-color: hsl(280, 80%, 40%);
+  --wild-glow: hsla(280, 80%, 40%, 0.4);
+}
+
+/* Dark Theme Variables (Default) */
+.dark-theme {
+  --bg-primary: hsl(225, 25%, 9%);
+  --bg-secondary: hsl(225, 20%, 13%);
+  --bg-table: radial-gradient(circle, hsl(220, 35%, 16%) 0%, hsl(225, 40%, 8%) 100%);
+  --bg-panel: hsla(225, 20%, 14%, 0.7);
+  --border-color: hsla(225, 15%, 25%, 0.4);
+  --text-primary: hsl(0, 0%, 95%);
+  --text-muted: hsl(225, 10%, 70%);
+  --accent-color: hsl(265, 85%, 60%);
+  --accent-glow: hsla(265, 85%, 60%, 0.5);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.8);
+  --glass-bg: rgba(15, 20, 35, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Light Theme Variables */
+.light-theme {
+  --bg-primary: hsl(220, 20%, 95%);
+  --bg-secondary: hsl(0, 0%, 100%);
+  --bg-table: radial-gradient(circle, hsl(145, 30%, 80%) 0%, hsl(145, 20%, 65%) 100%);
+  --bg-panel: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-primary: hsl(225, 25%, 15%);
+  --text-muted: hsl(225, 10%, 45%);
+  --accent-color: hsl(265, 75%, 50%);
+  --accent-glow: hsla(265, 75%, 50%, 0.3);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.16);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(0, 0, 0, 0.06);
+}
+
+/* Card Skin Variables */
+.skin-default {
+  --card-back-color: #0c1220;
+  --card-back-pattern: linear-gradient(135deg, #ff3b30 25%, #ffcc00 25%, #ffcc00 50%, #4cd964 50%, #4cd964 75%, #007aff 75%);
+}
+
+.skin-neon {
+  --card-back-color: #050508;
+  --card-back-pattern: radial-gradient(circle, #f005a9 10%, transparent 11%), radial-gradient(circle, #05e2f0 10%, transparent 11%);
+  --card-back-border: #f005a9;
+}
+
+.skin-cyberpunk {
+  --card-back-color: #1a1a24;
+  --card-back-pattern: repeating-linear-gradient(45deg, #ffe600, #ffe600 10px, #000 10px, #000 20px);
+}
+
+.skin-holographic {
+  --card-back-color: #2b303c;
+  --card-back-pattern: linear-gradient(45deg, #ff007f, #7f00ff, #00f0ff, #ff007f);
+  --card-back-size: 400% 400%;
+}
