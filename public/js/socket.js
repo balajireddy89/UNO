@@ -92,6 +92,10 @@ class WebSocketManager {
     this.send('player_ready', { ready: isReady });
   }
 
+  toggleSpectator() {
+    this.send('toggle_spectator');
+  }
+
   addAi(difficulty) {
     this.send('add_ai_opponent', { difficulty });
   }
@@ -181,6 +185,8 @@ class WebSocketManager {
     switch (type) {
       case 'join_success':
         app.activeRoomCode = data.roomCode;
+        const lobbyCodeVal = document.getElementById('lobby-code-val');
+        if (lobbyCodeVal) lobbyCodeVal.innerText = data.roomCode;
         app.closeOnlineLobbiesModal();
         app.navigateTo('lobby');
         // Clear chat

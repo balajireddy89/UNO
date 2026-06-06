@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -21,14 +22,14 @@ const socketConnections = new Map(); // userId -> WS client
 const activeRooms = new Map(); // roomCode -> GameSession
 
 // Helper to authenticate requests via Authorization header or query parameter
-function authenticateUser(req, res, next) {
+async function authenticateUser(req, res, next) {
   const token = req.headers.authorization || req.query.token;
   if (!token) return res.status(401).json({ error: 'Authentication token required.' });
   
   const user = activeSessions.get(token);
   if (!user) return res.status(401).json({ error: 'Invalid or expired session.' });
 
-  const ban = db.isBanned(user.id);
+  const ban = await db.isBanned(user.id);
   if (ban) {
     return res.status(403).json({ error: `You are banned: ${ban.reason}` });
   }
@@ -38,13 +39,13 @@ function authenticateUser(req, res, next) {
 }
 
 // REST Endpoints
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
   if (username.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters.' });
 
   try {
-    const user = db.createUser(username, password, false);
+    const user = await db.createUser(username, password, false);
     const token = crypto.randomBytes(32).toString('hex');
     activeSessions.set(token, user);
     res.json({ token, user });
@@ -53,14 +54,14 @@ app.post('/api/auth/register', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
 
-  const user = db.authenticate(username, password);
+  const user = await db.authenticate(username, password);
   if (!user) return res.status(400).json({ error: 'Invalid username or password.' });
 
-  const ban = db.isBanned(user.id);
+  const ban = await db.isBanned(user.id);
   if (ban) return res.status(403).json({ error: `Account is banned: ${ban.reason}` });
 
   const token = crypto.randomBytes(32).toString('hex');
@@ -68,12 +69,12 @@ app.post('/api/auth/login', (req, res) => {
   res.json({ token, user });
 });
 
-app.post('/api/auth/guest', (req, res) => {
+app.post('/api/auth/guest', async (req, res) => {
   const { username } = req.body;
   const guestName = username ? username.trim() : `Guest_${Math.floor(1000 + Math.random() * 9000)}`;
   
   try {
-    const user = db.createUser(guestName, '', true);
+    const user = await db.createUser(guestName, '', true);
     const token = crypto.randomBytes(32).toString('hex');
     activeSessions.set(token, user);
     res.json({ token, user });
@@ -82,29 +83,34 @@ app.post('/api/auth/guest', (req, res) => {
   }
 });
 
-app.get('/api/user/profile', authenticateUser, (req, res) => {
+app.get('/api/user/profile', authenticateUser, async (req, res) => {
   // Fresh reload of user from database
-  const user = db.getUserById(req.user.id);
+  const user = await db.getUserById(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
-  // Fetch match history for user
-  const matches = db.data.history.filter(m => 
+  // Fetch match history for user from Supabase
+  const { data: matchesList } = await db.supabase
+    .from('history')
+    .select('*')
+    .order('playedAt', { ascending: false });
+
+  const matches = (matchesList || []).filter(m => 
     m.players.some(p => p.userId === user.id)
-  ).sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt));
+  );
 
   res.json({ user, matches });
 });
 
-app.get('/api/user/leaderboard', (req, res) => {
+app.get('/api/user/leaderboard', async (req, res) => {
   const type = req.query.type || 'wins';
-  res.json(db.getLeaderboard(type));
+  res.json(await db.getLeaderboard(type));
 });
 
 // Shop endpoints
-app.post('/api/shop/buy', authenticateUser, (req, res) => {
+app.post('/api/shop/buy', authenticateUser, async (req, res) => {
   const { type, itemKey, price } = req.body;
   try {
-    const user = db.unlockCosmetic(req.user.id, type, itemKey, price);
+    const user = await db.unlockCosmetic(req.user.id, type, itemKey, price);
     activeSessions.set(req.query.token, user); // Update session record
     res.json({ user });
   } catch (err) {
@@ -112,10 +118,10 @@ app.post('/api/shop/buy', authenticateUser, (req, res) => {
   }
 });
 
-app.post('/api/shop/equip', authenticateUser, (req, res) => {
+app.post('/api/shop/equip', authenticateUser, async (req, res) => {
   const { type, itemKey } = req.body;
   try {
-    const user = db.equipCosmetic(req.user.id, type, itemKey);
+    const user = await db.equipCosmetic(req.user.id, type, itemKey);
     activeSessions.set(req.query.token, user); // Update session record
     res.json({ user });
   } catch (err) {
@@ -124,24 +130,24 @@ app.post('/api/shop/equip', authenticateUser, (req, res) => {
 });
 
 // Friends list
-app.get('/api/social/friends', authenticateUser, (req, res) => {
-  res.json(db.getFriends(req.user.id));
+app.get('/api/social/friends', authenticateUser, async (req, res) => {
+  res.json(await db.getFriends(req.user.id));
 });
 
-app.post('/api/social/request', authenticateUser, (req, res) => {
+app.post('/api/social/request', authenticateUser, async (req, res) => {
   const { friendUsername } = req.body;
   try {
-    const result = db.sendFriendRequest(req.user.id, friendUsername);
+    const result = await db.sendFriendRequest(req.user.id, friendUsername);
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-app.post('/api/social/respond', authenticateUser, (req, res) => {
+app.post('/api/social/respond', authenticateUser, async (req, res) => {
   const { friendId, accept } = req.body;
   try {
-    db.handleFriendRequest(req.user.id, friendId, accept);
+    await db.handleFriendRequest(req.user.id, friendId, accept);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -156,8 +162,8 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/stats', authenticateUser, requireAdmin, (req, res) => {
-  const dbStats = db.getAdminStats();
+app.get('/api/admin/stats', authenticateUser, requireAdmin, async (req, res) => {
+  const dbStats = await db.getAdminStats();
   const serverStats = {
     activeRooms: activeRooms.size,
     activeConnections: socketConnections.size,
@@ -172,14 +178,14 @@ app.get('/api/admin/stats', authenticateUser, requireAdmin, (req, res) => {
   res.json({ ...dbStats, ...serverStats });
 });
 
-app.get('/api/admin/users', authenticateUser, requireAdmin, (req, res) => {
-  res.json(db.getAllUsersForAdmin());
+app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
+  res.json(await db.getAllUsersForAdmin());
 });
 
-app.post('/api/admin/ban', authenticateUser, requireAdmin, (req, res) => {
+app.post('/api/admin/ban', authenticateUser, requireAdmin, async (req, res) => {
   const { userId, reason, expiresAt } = req.body;
   try {
-    db.banUser(userId, reason, expiresAt);
+    await db.banUser(userId, reason, expiresAt);
     // Boot banned user WebSocket if active
     const socket = socketConnections.get(userId);
     if (socket) {
@@ -192,23 +198,23 @@ app.post('/api/admin/ban', authenticateUser, requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/unban', authenticateUser, requireAdmin, (req, res) => {
+app.post('/api/admin/unban', authenticateUser, requireAdmin, async (req, res) => {
   const { userId } = req.body;
   try {
-    db.unbanUser(userId);
+    await db.unbanUser(userId);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-app.get('/api/admin/reports', authenticateUser, requireAdmin, (req, res) => {
-  res.json(db.getReports());
+app.get('/api/admin/reports', authenticateUser, requireAdmin, async (req, res) => {
+  res.json(await db.getReports());
 });
 
-app.post('/api/admin/resolve-report', authenticateUser, requireAdmin, (req, res) => {
+app.post('/api/admin/resolve-report', authenticateUser, requireAdmin, async (req, res) => {
   const { reportId } = req.body;
-  db.resolveReport(reportId);
+  await db.resolveReport(reportId);
   res.json({ success: true });
 });
 
@@ -248,7 +254,7 @@ wss.on('connection', (ws, req) => {
     });
   };
 
-  ws.on('message', (messageString) => {
+  ws.on('message', async (messageString) => {
     try {
       const { type, token, data } = JSON.parse(messageString);
 
@@ -260,7 +266,7 @@ wss.on('connection', (ws, req) => {
         return;
       }
 
-      const ban = db.isBanned(user.id);
+      const ban = await db.isBanned(user.id);
       if (ban) {
         sendToClient('error', { message: `Account is banned: ${ban.reason}` });
         ws.close();
@@ -351,6 +357,26 @@ wss.on('connection', (ws, req) => {
           break;
         }
 
+        case 'toggle_spectator': {
+          if (!roomCode) return;
+          const session = activeRooms.get(roomCode);
+          if (session && !session.gameStarted) {
+            const success = session.toggleSpectator(user.id);
+            if (success) {
+              const p = session.players.find(pl => pl.id === user.id);
+              broadcastToRoom('chat_message', {
+                sender: 'SYSTEM',
+                message: `${user.username} is now a ${p.isSpectator ? 'spectator' : 'player'}.`,
+                timestamp: Date.now()
+              });
+              broadcastToRoom('game_state_update', null);
+            } else {
+              sendToClient('toast', { type: 'error', message: 'Lobby is full. Cannot switch to player.' });
+            }
+          }
+          break;
+        }
+
         case 'add_ai_opponent': {
           if (!roomCode) return;
           const session = activeRooms.get(roomCode);
@@ -408,7 +434,7 @@ wss.on('connection', (ws, req) => {
               broadcastToRoom('card_played', { userId: user.id, username: user.username });
               
               if (session.gameEnded) {
-                handleGameOver(session);
+                await handleGameOver(session);
               } else {
                 broadcastToRoom('game_state_update', null);
                 // Trigger AI turns if next player is AI
@@ -530,7 +556,7 @@ wss.on('connection', (ws, req) => {
         case 'report_user': {
           const { reportedUserId, reason } = data;
           try {
-            db.createReport(user.id, reportedUserId, reason, roomCode || '');
+            await db.createReport(user.id, reportedUserId, reason, roomCode || '');
             sendToClient('toast', { type: 'success', message: 'Report submitted. Moderators will review.' });
           } catch (e) {
             sendToClient('toast', { type: 'error', message: 'Failed to report.' });
@@ -593,7 +619,7 @@ wss.on('connection', (ws, req) => {
 
 // Helper: cycle AI players turns
 function triggerAiCycle(session) {
-  setTimeout(() => {
+  setTimeout(async () => {
     let nextPlayer = session.getCurrentPlayer();
     if (nextPlayer && nextPlayer.isAI && session.gameStarted && !session.gameEnded) {
       const aiAction = session.runAiTurn();
@@ -645,7 +671,7 @@ function triggerAiCycle(session) {
       }
 
       if (session.gameEnded) {
-        handleGameOver(session);
+        await handleGameOver(session);
       } else {
         // Send state updates
         session.players.forEach(p => {
@@ -664,7 +690,7 @@ function triggerAiCycle(session) {
 }
 
 // Helper: Handle End of Game Rewards and Record saving
-function handleGameOver(session) {
+async function handleGameOver(session) {
   const winner = session.players.find(p => p.id === session.winnerId);
   const activePlayers = session.players.filter(p => !p.isSpectator);
   
@@ -716,7 +742,7 @@ function handleGameOver(session) {
   const humanPlayers = results.filter(r => !r.id.startsWith('ai_'));
   const winnerIsHuman = winner && !winner.isAI;
 
-  db.saveMatchHistory(
+  await db.saveMatchHistory(
     winnerIsHuman ? winner.id : 'ai_winner',
     'online',
     humanPlayers,
@@ -743,7 +769,7 @@ function handleGameOver(session) {
 
 // Global active match heartbeat loop (30s Turn limit execution)
 setInterval(() => {
-  activeRooms.forEach(session => {
+  activeRooms.forEach(async (session) => {
     if (session.gameStarted && !session.gameEnded) {
       const active = session.getActivePlayers();
       const current = active[session.currentPlayerIdx];
