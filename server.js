@@ -841,3 +841,5 @@ setInterval(() => {
 server.listen(PORT, () => {
   console.log(`UNO Multiplayer Server running on port ${PORT}`);
 });
+
+module.exports = app;
