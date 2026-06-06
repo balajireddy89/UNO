@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     "unlockedThemes" JSONB DEFAULT '["default_table"]'::jsonb,
     stats_wins INTEGER DEFAULT 0,
     stats_losses INTEGER DEFAULT 0,
-    stats_gamesPlayed INTEGER DEFAULT 0,
+    "stats_gamesPlayed" INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
